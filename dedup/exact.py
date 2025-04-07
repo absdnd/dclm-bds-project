@@ -4,9 +4,9 @@ from .base import Deduplicator
 
 
 class ExactHashDeduplicator(Deduplicator):
-    def __init__(self, seen_hashes: set[str], text_column: str = "text"):
+    def __init__(self, text_column: str = "text"):
         self.text_column = text_column
-        self.seen_hashes = seen_hashes if seen_hashes is not None else set()
+        self.seen_hashes = set()
 
     def run(self, examples: list[dict]) -> list[dict]:
         unique_rows = []

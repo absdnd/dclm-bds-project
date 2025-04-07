@@ -110,7 +110,7 @@ class YourDeduplicator(Deduplicator):
         return deduped_examples
 ```
 
-3. Register it in `dedup/registry.py` (will implement this soon, currently just change the if statements in runner.py):
+3. Register it in `dedup/registry.py`:
 
 ```python
 from .yourtechnique import YourDeduplicator

@@ -1,6 +1,7 @@
 import itertools
 
-from dedup.minhash import MinHashDeduplicator
+from .minhash import MinHashDeduplicator
+from .registry import DEDUPLICATOR_REGISTRY
 
 
 from .utils import push_chunk_to_hub, init_wandb
@@ -34,15 +35,15 @@ def run_pipeline(cfg: DedupConfig):
         streaming=True,
     )
 
-    if cfg.method == "exact":
-        seen_hashes = set()
-        deduper = ExactHashDeduplicator(
-            text_column=cfg.text_column, seen_hashes=seen_hashes
+    dedup_cls = DEDUPLICATOR_REGISTRY.get(cfg.method)
+
+    if dedup_cls is None:
+        raise ValueError(
+            f"Unknown deduplication method '{cfg.method}'. "
+            f"Available methods: {list(DEDUPLICATOR_REGISTRY.keys())}"
         )
-    elif cfg.method == "minhash":
-        deduper = MinHashDeduplicator(text_column=cfg.text_column)
-    else:
-        raise ValueError(f"Unknown deduplication method: {cfg.method}")
+
+    deduper = dedup_cls(text_column=cfg.text_column)
 
     print("Processing in streaming chunks (global deduplication)...")
     for i, chunk in enumerate(chunked_iterable(raw_stream, cfg.chunk_size)):
