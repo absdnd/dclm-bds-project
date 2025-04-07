@@ -1,11 +1,14 @@
 import itertools
 
+from dedup.minhash import MinHashDeduplicator
+
 
 from .utils import push_chunk_to_hub, init_wandb
 from .exact import ExactHashDeduplicator
 from datasets import load_dataset
 from .config import DedupConfig
 from .metrics import MetricsLogger
+
 
 metrics_logger = MetricsLogger()
 
@@ -31,13 +34,19 @@ def run_pipeline(cfg: DedupConfig):
         streaming=True,
     )
 
-    seen_hashes = set()
-    deduper = ExactHashDeduplicator(
-        text_column=cfg.text_column, seen_hashes=seen_hashes
-    )
+    if cfg.method == "exact":
+        seen_hashes = set()
+        deduper = ExactHashDeduplicator(
+            text_column=cfg.text_column, seen_hashes=seen_hashes
+        )
+    elif cfg.method == "minhash":
+        deduper = MinHashDeduplicator(text_column=cfg.text_column)
+    else:
+        raise ValueError(f"Unknown deduplication method: {cfg.method}")
 
     print("Processing in streaming chunks (global deduplication)...")
     for i, chunk in enumerate(chunked_iterable(raw_stream, cfg.chunk_size)):
+
         deduped_chunk, perf = metrics_logger.run_with_metrics(deduper.run, chunk)
 
         print(f"Chunk {i + 1}: {len(chunk)} → {len(deduped_chunk)} after deduplication")

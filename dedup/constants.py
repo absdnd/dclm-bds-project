@@ -1,4 +1,4 @@
 from typing import Literal
 
 
-DEDUPLICATION_METHODS = Literal["exact"]
+DEDUPLICATION_METHODS = Literal["exact", "minhash"]
