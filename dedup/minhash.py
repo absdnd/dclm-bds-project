@@ -9,8 +9,8 @@ class MinHashDeduplicator(Deduplicator):
     def __init__(
         self,
         text_column: str = "text",
-        threshold: float = 0.8,
-        num_hashes: int = 128,
+        threshold: float = 0.5,
+        num_hashes: int = 120,
     ):
         """Initialize the MinHash deduplicator.
 
@@ -45,23 +45,4 @@ class MinHashDeduplicator(Deduplicator):
                 self.index[key] = text
                 deduped.append(example)
                 self.key_counter += 1
-            else:
-
-                skip = False
-                for match_key in matches:
-                    matched_text = self.index.get(match_key, "[Unknown text]")
-                    if matched_text == text:  # Skip exact matches
-                        skip = True
-                        break
-
-                if not skip:
-                    print("Current Text:")
-                    print(text)
-
-                    print("\nMatched With:")
-                    for match_key in matches:
-                        matched_text = self.index.get(match_key, "[Unknown text]")
-                        print(matched_text)
-
-                print("------------------------\n")
         return deduped
