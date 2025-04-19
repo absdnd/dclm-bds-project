@@ -9,3 +9,4 @@ DEDUPLICATOR_REGISTRY: dict[str, Type[Deduplicator]] = {
     "minhash": MinHashDeduplicator,
     "bloomfilter": BloomFilterDeduplicator,
 }
+
