@@ -2,15 +2,17 @@ import hashlib
 import time
 import multiprocessing
 from .base import Deduplicator
-
+from .config import DedupConfig
 
 class ExactHashDeduplicator(Deduplicator):
     def __init__(
         self,
-        text_column: str = "text",
+        cfg: DedupConfig,
         debug_interval: int = 1000,  # how often to print progress
     ):
-        self.text_column = text_column
+
+        self.cfg = cfg
+        self.text_column = cfg.text_column
         self.debug_interval = debug_interval
         # This is the single, shared set—only the main process will update it
         self.seen_hashes = set()

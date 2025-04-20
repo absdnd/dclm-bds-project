@@ -44,7 +44,7 @@ def run_pipeline(cfg: DedupConfig):
             f"Available methods: {list(DEDUPLICATOR_REGISTRY.keys())}"
         )
 
-    deduper = dedup_cls(text_column=cfg.text_column)
+    deduper = dedup_cls(cfg = cfg)
 
     print("Processing in streaming chunks (global deduplication)...")
     for i, chunk in enumerate(chunked_iterable(raw_stream, cfg.chunk_size)):

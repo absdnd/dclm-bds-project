@@ -4,25 +4,39 @@ from datasketch import MinHash, MinHashLSH
 from collections import defaultdict
 from nltk.tokenize import word_tokenize
 
+from .config import DedupConfig
+
+
+
+
 from .base import Deduplicator
 
 
 class MinHashDeduplicator(Deduplicator):
+    
     def __init__(
         self,
+        cfg: DedupConfig,
         text_column: str = "text",
-        threshold: float = 0.5,
-        num_hashes: int = 120,
         debug_interval: int = 1000,  # how often to print debug
     ):
-        self.text_column = text_column
-        self.threshold = threshold
-        self.num_hashes = num_hashes
+        """
+        Initialize MinHash deduplicator with configuration.
+        
+        Args:
+            cfg: DedupConfig object containing all configuration parameters
+            debug_interval: How often to print debug information (default: 1000)
+        """
+        self.cfg = cfg
+        self.text_column = cfg.text_column
+        self.threshold = cfg.minhash_threshold
+        self.num_hashes = cfg.minhash_num_hashes  
         self.debug_interval = debug_interval
 
-        self.lsh = MinHashLSH(threshold=threshold, num_perm=num_hashes)
+        self.lsh = MinHashLSH(threshold=self.threshold, num_perm=self.num_hashes)
         self.index = defaultdict(str)
         self.key_counter = 0
+
 
     @staticmethod
     def _worker(args):
