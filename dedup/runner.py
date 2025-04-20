@@ -33,6 +33,7 @@ def run_pipeline(cfg: DedupConfig):
         cfg.dataset_config,
         split=cfg.dataset_split,
         streaming=True,
+        trust_remote_code=True,
     )
 
     dedup_cls = DEDUPLICATOR_REGISTRY.get(cfg.method)
