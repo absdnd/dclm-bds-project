@@ -83,6 +83,7 @@ wandb login
 ```
 dedup/
 ├── base.py             # Base class for all deduplicators
+├── bloomfilter.py      # Bloom Filter Deduplicator
 ├── exact.py        # ExactHash deduplicator
 ├── minhash.py          # MinHash LSH deduplicator
 ├── metrics/     # Metrics collection
