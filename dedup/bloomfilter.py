@@ -1,24 +1,10 @@
-'''
-A Bloom filter is a space-efficient probabilistic data structure that is used to test whether an item is a member of a set. The bloom filter will always say yes if an item is a set member. However, the bloom filter might still say yes although an item is not a member of the set (false positive). The items can be added to the bloom filter but the items cannot be removed. The bloom filter supports the following operations:
-
-    adding an item to the set
-    test the membership of an item in the set
-Source: https://systemdesign.one/bloom-filters-explained/
-'''
-
-from dedup.base import Deduplicator
+from .base import Deduplicator
 import hashlib
 import math
 import bitarray
+import time
+import multiprocessing
 
-'''
-More aggressive dedupe:
-Lower error_rate → More accurate, fewer false positives → more correct duplicates removed.
-Increase capacity → Reduces collision, better performance.
-
-Less aggressive dedupe:
-Increase error rate or reduce capacity
-'''
 
 class SimpleBloomFilter:
     def __init__(self, capacity: int, error_rate: float):
@@ -39,7 +25,10 @@ class SimpleBloomFilter:
 
     def _hashes(self, item: str):
         for i in range(self.hash_count):
-            yield int(hashlib.sha256((item + str(i)).encode("utf-8")).hexdigest(), 16) % self.size
+            yield int(
+                hashlib.sha256((item + str(i)).encode("utf-8")).hexdigest(),
+                16,
+            ) % self.size
 
     def add(self, item: str):
         for i in self._hashes(item):
@@ -50,28 +39,59 @@ class SimpleBloomFilter:
 
 
 class BloomFilterDeduplicator(Deduplicator):
-    def __init__(self, 
-                 text_column: str = "text",
-                 capacity: int = 100000, 
-                 error_rate: float = 0.001, 
-                 key: str = None):
+    def __init__(
+        self,
+        text_column: str = "text",
+        capacity: int = 100000,
+        error_rate: float = 0.001,
+        key: str | None = None,
+        debug_interval: int = 1000,  # how often to print progress
+    ):
         self.text_column = text_column
         self.bloom = SimpleBloomFilter(capacity=capacity, error_rate=error_rate)
         self.key = key
+        self.debug_interval = debug_interval
 
-    def _hash(self, example: dict) -> str:
-        if self.key is not None and self.key in example:
-            content = str(example[self.key])
+    @staticmethod
+    def _worker(args):
+        """
+        Worker only computes the fingerprint; does NOT touch bloom.
+        Returns (idx, fingerprint).
+        """
+        idx, example, text_column, key = args
+        if key is not None and key in example:
+            content = str(example[key])
         else:
-            content = str(example.get(self.text_column, ""))
-        return hashlib.sha256(content.encode("utf-8")).hexdigest()
+            content = str(example.get(text_column, ""))
+        fp = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        return idx, fp
 
     def run(self, examples: list[dict]) -> list[dict]:
-        deduped_examples = []
-        for example in examples:
-            fingerprint = self._hash(example)
-            if fingerprint not in self.bloom:
-                self.bloom.add(fingerprint)
-                deduped_examples.append(example)
-        return deduped_examples
+        total = len(examples)
+        start = time.time()
+        deduped = []
 
+        # prepare arguments for each worker
+        tasks = [(i, ex, self.text_column, self.key) for i, ex in enumerate(examples)]
+
+        with multiprocessing.Pool() as pool:
+            for count, (idx, fingerprint) in enumerate(
+                pool.imap(self._worker, tasks), start=1
+            ):
+                # MAIN PROCESS: consistent bloom membership + insert
+                if fingerprint not in self.bloom:
+                    self.bloom.add(fingerprint)
+                    deduped.append(examples[idx])
+
+                # debug print
+                if count % self.debug_interval == 0 or count == total:
+                    elapsed = time.time() - start
+                    rate = count / elapsed if elapsed > 0 else float("inf")
+                    print(
+                        f"[{time.strftime('%H:%M:%S')}] "
+                        f"Processed {count}/{total} docs ― "
+                        f"{rate:.1f} docs/sec, "
+                        f"{len(deduped)} unique"
+                    )
+
+        return deduped

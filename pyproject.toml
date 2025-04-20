@@ -15,6 +15,7 @@ dependencies = [
   "matplotlib (>=3.10.1,<4.0.0)",
   "nltk (>=3.9.1,<4.0.0)",
   "datasketch (>=1.6.5,<2.0.0)",
+  "bitarray (>=3.3.1,<4.0.0)",
 ]
 
 
