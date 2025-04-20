@@ -17,7 +17,6 @@ class MinHashDeduplicator(Deduplicator):
     def __init__(
         self,
         cfg: DedupConfig,
-        text_column: str = "text",
         debug_interval: int = 1000,  # how often to print debug
     ):
         """
