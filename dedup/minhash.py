@@ -1,3 +1,5 @@
+import nltk
+nltk.download('punkt_tab')
 import multiprocessing
 import time
 from datasketch import MinHash, MinHashLSH
