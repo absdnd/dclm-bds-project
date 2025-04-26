@@ -1,15 +1,14 @@
 import itertools
 
 from .minhash import MinHashDeduplicator
-from .registry import DEDUPLICATOR_REGISTRY
-
-
-from .utils import push_chunk_to_hub, init_wandb
 from .exact import ExactHashDeduplicator
-from datasets import load_dataset
+
+from .registry import DEDUPLICATOR_REGISTRY
+from .utils import push_chunk_to_hub, init_wandb
 from .config import DedupConfig
 from .metrics import MetricsLogger
 
+from datasets import load_dataset
 
 metrics_logger = MetricsLogger()
 
@@ -47,9 +46,14 @@ def run_pipeline(cfg: DedupConfig):
     deduper = dedup_cls(cfg = cfg)
 
     print("Processing in streaming chunks (global deduplication)...")
+    
     for i, chunk in enumerate(chunked_iterable(raw_stream, cfg.chunk_size)):
 
-        deduped_chunk, perf = metrics_logger.run_with_metrics(deduper.run, chunk)
+        #deduped_chunk, perf = metrics_logger.run_with_metrics(deduper.run, chunk)
+
+        (deduped_chunk, metrics), perf = metrics_logger.run_with_metrics(
+            lambda: deduper.run(chunk)
+        )
 
         print(f"Chunk {i + 1}: {len(chunk)} → {len(deduped_chunk)} after deduplication")
 
@@ -59,6 +63,10 @@ def run_pipeline(cfg: DedupConfig):
             deduped_len=len(deduped_chunk),
             runtime_mem_metrics=perf,
         )
+
+        # Log method-specific metrics if available
+        metrics_logger.log_dedup_metrics(metrics)
+
         push_chunk_to_hub(
             chunk=deduped_chunk,
             repo_id=cfg.hf_repo_id,
