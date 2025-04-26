@@ -1,4 +1,5 @@
-
+import nltk
+nltk.download('punkt_tab')
 import multiprocessing
 import time
 import logging
