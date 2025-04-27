@@ -3,34 +3,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import time
 import psutil
-import gc
-from typing import Dict, Any, List, Optional
+
 
 class MetricsLogger:
     def __init__(self):
-        # Core metrics tracking
         self.chunk_indices = []
         self.original_counts = []
         self.deduped_counts = []
-        
-        # Performance metrics
-        self.total_runtime = 0.0
-        self.total_memory_mb = 0.0
-
         self.similarity_scores_before = []
         self.similarity_scores_after = []
-        
-        # Deduplication metrics storage
-        self.dedup_metrics = {
-            'processed_total': [],
-            'duplicate_ratio': [],
-            'global_unique': [],
-            'global_duplicates': []
-        }
 
-    def run_with_metrics(self, fn, *args, **kwargs) -> tuple[Any, Dict[str, Any]]:
-        """Measure runtime and memory usage of a function."""
-        gc.collect()
+        self.total_runtime = 0.0
+        self.total_memory = 0.0
+
+    def run_with_metrics(self, fn, *args, **kwargs):
+        """Run a function and measure runtime and memory usage."""
         start_time = time.time()
         process = psutil.Process()
         start_mem = process.memory_info().rss
@@ -39,74 +26,35 @@ class MetricsLogger:
 
         end_time = time.time()
         end_mem = process.memory_info().rss
-
         runtime = end_time - start_time
         mem_used = (end_mem - start_mem) / 1024 / 1024  # in MB
-        
-        self.total_memory_mb += mem_used
-        self.total_runtime += runtime
-        
-        metrics = {
-            'runtime_sec': runtime,
-            'memory_usage_mb': mem_used
-        }
-        return result, metrics
 
-    def log_chunk_metrics(self, 
-                         chunk_index: int, 
-                         original_len: int, 
-                         deduped_len: int,
-                         runtime_mem_metrics: Dict[str, float]):
-        """Log metrics for a processed chunk."""
+        return result, {"runtime_sec": runtime, "memory_usage_mb": mem_used}
+
+    def log_chunk_metrics(
+        self, chunk_index, original_len, deduped_len, runtime_mem_metrics
+    ):
         self.chunk_indices.append(chunk_index)
         self.original_counts.append(original_len)
         self.deduped_counts.append(deduped_len)
-        
+
         chunk_metrics = {
-            'chunk_index': chunk_index,
-            'chunk_original_count': original_len,
-            'chunk_deduplicated_count': deduped_len,
-            'chunk_duplicates_removed': original_len - deduped_len,
-            'chunk_compression_ratio': deduped_len / original_len if original_len else 0,
-            **runtime_mem_metrics
+            "chunk_index": chunk_index,
+            "chunk_original_count": original_len,
+            "chunk_deduplicated_count": deduped_len,
+            "chunk_duplicates_removed": original_len - deduped_len,
+            "chunk_compression_ratio": (
+                deduped_len / original_len if original_len else 0
+            ),
+            "chunk_duplicates_removed_pct": (
+                (1 - deduped_len / original_len) * 100 if original_len else 0
+            ),
         }
-        
+
+        if runtime_mem_metrics:
+            chunk_metrics.update(runtime_mem_metrics)
+
         wandb.log(chunk_metrics)
-
-    def log_dedup_metrics(self, metrics: Dict[str, Any]):
-       
-        # Store metrics for final summary
-        for key in self.dedup_metrics:
-            if key in metrics:
-                self.dedup_metrics[key].append(metrics[key])
-        
-        # Log standard metrics to wandb
-        standard_metrics = {
-            k: metrics[k] for k in [
-                'processed_total',
-                'chunk_kept',
-                'chunk_duplicates',
-                'global_unique',
-                'global_duplicates',
-                'duplicate_ratio'
-            ] if k in metrics
-        }
-        wandb.log(standard_metrics)
-        
-        # Handle special cases
-        if 'top_duplicates' in metrics:
-            self._log_duplicate_examples(metrics['top_duplicates'])
-        if 'similarity_scores' in metrics:
-            self._log_similarity_distribution(metrics['similarity_scores'])
-
-    def _log_duplicate_examples(self, top_duplicates: List[tuple[int, str]]):
-        """Log examples of most frequent duplicates."""
-        table = wandb.Table(
-            columns=["Count", "Text Sample"],
-            data=[[count, text[:200] + "..." if len(text) > 200 else text]
-                 for count, text in top_duplicates]
-        )
-        wandb.log({"top_duplicates": table})
 
     def log_similarity_scores(self, similarities, stage="before"):
         if stage == "before":
@@ -139,25 +87,17 @@ class MetricsLogger:
         plt.close()
 
     def _plot_pie_chart(self):
-        """Plot overall deduplication breakdown."""
         total_original = sum(self.original_counts)
         total_deduped = sum(self.deduped_counts)
-        
+        values = [total_deduped, total_original - total_deduped]
+        labels = ["Unique", "Duplicates"]
         plt.figure(figsize=(5, 5))
-        plt.pie(
-            [total_deduped, total_original - total_deduped],
-            labels=["Unique", "Duplicates"],
-            autopct="%1.1f%%",
-            startangle=90
-        )
+        plt.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
         plt.title("Overall Deduplication Breakdown")
-        wandb.log({"deduplication_breakdown": wandb.Image(plt)})
+        wandb.log({"Deduplication Breakdown": wandb.Image(plt)})
         plt.close()
-    
-    def log_final_summary(self):
-        """Generate and log final summary metrics and visualizations."""
-        # Calculate totals
 
+    def log_final_summary(self):
         self._plot_compression_line()
         self._plot_pie_chart()
         self._plot_similarity_histogram(
@@ -169,19 +109,17 @@ class MetricsLogger:
 
         total_original = sum(self.original_counts)
         total_deduped = sum(self.deduped_counts)
-        
-        # Final metrics
-        final_metrics = {
-            'total_original_count': total_original,
-            'total_deduplicated_count': total_deduped,
-            'total_duplicates_removed': total_original - total_deduped,
-            'total_compression_ratio': total_deduped / total_original if total_original else 0,
-            'avg_duplicate_ratio': sum(self.dedup_metrics['duplicate_ratio']) / 
-                                 len(self.dedup_metrics['duplicate_ratio']) if self.dedup_metrics['duplicate_ratio'] else 0,
-            'total_memory_used_mb': self.total_memory_mb,
-            'total_algorithm_runtime_sec': self.total_runtime,
-        }
-        wandb.log(final_metrics)
-        
 
-    
+        wandb.log(
+            {
+                "total_original_count": total_original,
+                "total_deduplicated_count": total_deduped,
+                "total_duplicates_removed": total_original - total_deduped,
+                "total_compression_ratio": (
+                    total_deduped / total_original if total_original else 0
+                ),
+                "total_duplicates_removed_pct": (
+                    (1 - total_deduped / total_original) * 100 if total_original else 0
+                ),
+            }
+        )

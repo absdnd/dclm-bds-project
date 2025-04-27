@@ -4,7 +4,6 @@ import math
 import bitarray
 import time
 import multiprocessing
-from .config import DedupConfig
 
 
 class SimpleBloomFilter:
@@ -42,15 +41,13 @@ class SimpleBloomFilter:
 class BloomFilterDeduplicator(Deduplicator):
     def __init__(
         self,
-        cfg: DedupConfig,
+        text_column: str = "text",
         capacity: int = 100000,
         error_rate: float = 0.001,
         key: str | None = None,
         debug_interval: int = 1000,  # how often to print progress
-        
     ):
-        self.cfg = cfg
-        self.text_column = cfg.text_column
+        self.text_column = text_column
         self.bloom = SimpleBloomFilter(capacity=capacity, error_rate=error_rate)
         self.key = key
         self.debug_interval = debug_interval
