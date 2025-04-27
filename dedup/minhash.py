@@ -102,3 +102,4 @@ class MinHashDeduplicator(Deduplicator):
                 doc['duplicate_count'] = duplicate_counts[i]
 
         return deduped, metrics
+
