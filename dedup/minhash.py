@@ -128,7 +128,7 @@ class MinHashDeduplicator(Deduplicator):
 
         # Save duplicates to Excel at the end of processing
         if self.log_duplicates:
-            save_duplicates(self.threshold)
+            save_duplicates()
             # excel_path  = save_duplicates(threshold=self.threshold)
             # wandb.log({"duplicates_file": wandb.Table(dataframe=pd.read_excel(excel_path))})
 

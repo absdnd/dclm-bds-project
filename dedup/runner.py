@@ -73,7 +73,7 @@ def run_pipeline(cfg: DedupConfig):
             split_name=f"chunk_{i+1}",
             private=cfg.hf_private,
             token=cfg.hf_token.get_secret_value() if cfg.hf_token else None,
-            data_dir=f"deduplicated_{cfg.dataset_config}_using_{cfg.method}_with_max_chunks_{cfg.max_chunks}",
+            data_dir=f"deduplicated_{cfg.dataset_config}_using_{cfg.method}_with_{cfg.max_chunks*cfg.chunk_size//1000}k_data",
         )
 
         if cfg.max_chunks is not None and i + 1 >= cfg.max_chunks:
