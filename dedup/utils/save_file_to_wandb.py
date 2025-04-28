@@ -55,13 +55,13 @@ def save_duplicates_to_wandb() -> None:
         return
     
     # Create and log table
-    table = wandb.Table(columns=["Original", "Duplicate", "Visual Diff", "Similarity"])
+    table = wandb.Table(columns=["Original", "Duplicate", "Visual Diff", "Parameter"])
     for dup in _duplicates_buffer[:_max_duplicates]:
         table.add_data(
             dup['Original'],
             dup['Duplicate'],
             dup['Visual Diff'],
-            dup['Similarity']
+            dup['Parameter']
         )
     
     wandb.log({

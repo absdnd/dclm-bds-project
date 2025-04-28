@@ -31,6 +31,8 @@ def run_pipeline(cfg: DedupConfig):
         cfg.dataset_name,
         cfg.dataset_config,
         split=cfg.dataset_split,
+        #snapshots= cfg.dataset_snapshot,
+        #languages = cfg.dataset_language,
         streaming=True,
         trust_remote_code=True,
     )

@@ -10,6 +10,13 @@ class DedupConfig(BaseSettings):
     dataset_split: str = Field(
         default="train", description="Split to use, e.g., 'train'"
     )
+    # dataset_snapshot: str = Field(
+    #     default="None", description="Snapshot to use"
+    # )
+    # dataset_language: str = Field(
+    #     default="None", description="Language to use in case of multiple, e.g., 'en'"
+    # )
+
     text_column: str = Field(default="text", description="Column with textual content")
 
     # General deduplication settings
