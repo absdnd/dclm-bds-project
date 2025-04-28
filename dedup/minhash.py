@@ -5,7 +5,7 @@ from collections import defaultdict
 from nltk.tokenize import word_tokenize
 from .config import DedupConfig
 from .base import Deduplicator
-from .utils import init_duplicate_logging, log_duplicate_pair, save_duplicates
+from .utils import log_duplicate_pair, save_duplicates
 import wandb
 import pandas as pd
 
@@ -41,8 +41,6 @@ class MinHashDeduplicator(Deduplicator):
         self.processed_count = 0
         self.global_duplicates = 0
         
-        # Initialize duplicate logging system
-        init_duplicate_logging(log_duplicates, self.threshold)
 
     @staticmethod
     def _worker(args):
@@ -101,7 +99,8 @@ class MinHashDeduplicator(Deduplicator):
                         # Log the duplicate pair (original + current duplicate)
                         log_duplicate_pair(
                             original_text=original_text,
-                            duplicate_text=text
+                            duplicate_text=text,
+                            threshold=self.threshold
                         )
 
         self.processed_count += len(chunk)
@@ -129,7 +128,8 @@ class MinHashDeduplicator(Deduplicator):
 
         # Save duplicates to Excel at the end of processing
         if self.log_duplicates:
-            excel_path  = save_duplicates()
-            wandb.log({"duplicates_file": wandb.Table(dataframe=pd.read_excel(excel_path))})
+            save_duplicates(self.threshold)
+            # excel_path  = save_duplicates(threshold=self.threshold)
+            # wandb.log({"duplicates_file": wandb.Table(dataframe=pd.read_excel(excel_path))})
 
         return deduped, metrics
