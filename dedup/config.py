@@ -44,15 +44,15 @@ class DedupConfig(BaseSettings):
     )
 
     # exact-specific settings (only used when method=exact)
-    exact_error_rate: float = Field(
+    bloom_error_rate: float = Field(
         default=0.001,
-        description="Error rate for exact",
+        description="Error rate for bloom",
         gt=0.0,
         lt=1.0,
     )
-    exact_capacity: int = Field(default=100000, description="Capacity for exact", gt=0)
-    exact_debug_interval: int = Field(
-        default=1000, description="How often to print debug info for exact", gt=0
+    bloom_capacity: int = Field(default=100000, description="Capacity for bloom", gt=0)
+    bloom_debug_interval: int = Field(
+        default=1000, description="How often to print debug info for bloom", gt=0
     )
 
     # Weights & Biases configuration

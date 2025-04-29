@@ -48,10 +48,10 @@ class BloomFilterDeduplicator(Deduplicator):
         self.cfg = cfg
         self.text_column = cfg.text_column
         self.bloom = SimpleBloomFilter(
-            capacity=cfg.exact_capacity, error_rate=cfg.exact_error_rate
+            capacity=cfg.bloom_capacity, error_rate=cfg.bloom_error_rate
         )
         self.key = key
-        self.debug_interval = cfg.exact_debug_interval
+        self.debug_interval = cfg.bloom_debug_interval
 
     @staticmethod
     def _worker(args):
