@@ -43,17 +43,15 @@ class BloomFilterDeduplicator(Deduplicator):
     def __init__(
         self,
         cfg: DedupConfig,
-        capacity: int = 100000,
-        error_rate: float = 0.001,
         key: str | None = None,
-        debug_interval: int = 1000,  # how often to print progress
-        
     ):
         self.cfg = cfg
         self.text_column = cfg.text_column
-        self.bloom = SimpleBloomFilter(capacity=capacity, error_rate=error_rate)
+        self.bloom = SimpleBloomFilter(
+            capacity=cfg.exact_capacity, error_rate=cfg.exact_error_rate
+        )
         self.key = key
-        self.debug_interval = debug_interval
+        self.debug_interval = cfg.exact_debug_interval
 
     @staticmethod
     def _worker(args):
@@ -69,7 +67,7 @@ class BloomFilterDeduplicator(Deduplicator):
         fp = hashlib.sha256(content.encode("utf-8")).hexdigest()
         return idx, fp
 
-    def run(self, examples: list[dict]) -> list[dict]:
+    def run(self, examples: list[dict], steps: int) -> list[dict]:
         total = len(examples)
         start = time.time()
         deduped = []

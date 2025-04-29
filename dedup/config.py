@@ -3,6 +3,7 @@ from pydantic import Field, SecretStr
 
 from .constants import DEDUPLICATION_METHODS
 
+
 class DedupConfig(BaseSettings):
     # Dataset configuration
     dataset_name: str = Field(description="Hugging Face dataset name, e.g., 'c4'")
@@ -24,7 +25,7 @@ class DedupConfig(BaseSettings):
     chunk_size: int = Field(
         default=1000, description="Number of samples to stream per chunk"
     )
-    max_chunks: int = Field(
+    max_chunks: int | None = Field(
         default=None, description="Limit number of chunks to process"
     )
 
@@ -33,17 +34,25 @@ class DedupConfig(BaseSettings):
         default=0.8,
         description="Similarity threshold for MinHash (0.0-1.0)",
         gt=0.0,
-        lt=1.0
+        lt=1.0,
     )
     minhash_num_hashes: int = Field(
-        default=150,
-        description="Number of hashes for MinHash",
-        gt=0
+        default=150, description="Number of hashes for MinHash", gt=0
     )
     minhash_debug_interval: int = Field(
-        default=1000,
-        description="How often to print debug info for MinHash",
-        gt=0
+        default=1000, description="How often to print debug info for MinHash", gt=0
+    )
+
+    # exact-specific settings (only used when method=exact)
+    exact_error_rate: float = Field(
+        default=0.001,
+        description="Error rate for exact",
+        gt=0.0,
+        lt=1.0,
+    )
+    exact_capacity: int = Field(default=100000, description="Capacity for exact", gt=0)
+    exact_debug_interval: int = Field(
+        default=1000, description="How often to print debug info for exact", gt=0
     )
 
     # Weights & Biases configuration
@@ -57,7 +66,7 @@ class DedupConfig(BaseSettings):
     hf_private: bool = Field(
         default=True, description="Push HF repo as private (default True)"
     )
-    
+
     hf_token: SecretStr | None = Field(
         default=None, description="Hugging Face API Token (optional)"
     )
