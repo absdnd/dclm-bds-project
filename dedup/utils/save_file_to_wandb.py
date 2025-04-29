@@ -47,7 +47,7 @@ def log_duplicate_pair(
         'Parameter': f"{threshold}"
     })
 
-def save_duplicates_to_wandb() -> None:
+def save_duplicates_to_wandb(step) -> None:
     """Save duplicates directly to wandb with visual diffs"""
     global _duplicates_buffer
     
@@ -65,9 +65,8 @@ def save_duplicates_to_wandb() -> None:
         )
     
     wandb.log({
-        "duplicates": table,
-        "total_duplicates": len(_duplicates_buffer)
-    })
+        "duplicates": table
+    }, step=step)
     
     # Clear buffer
     _duplicates_buffer = []

@@ -16,7 +16,7 @@ class MinHashDeduplicator(Deduplicator):
         cfg: DedupConfig,
         debug_interval: int = 1000,
         log_duplicates: bool = True,
-        top_n_duplicates: int = 10,
+        top_n_duplicates: int = 10
     ):
         """
         Initialize MinHash deduplicator with configuration.
@@ -34,7 +34,7 @@ class MinHashDeduplicator(Deduplicator):
         self.debug_interval = debug_interval
         self.log_duplicates = log_duplicates
         self.top_n_duplicates = top_n_duplicates
-
+        
         self.lsh = MinHashLSH(threshold=self.threshold, num_perm=self.num_hashes)
         self.index = defaultdict(list)  # {group_key: [(chunk_id, doc_idx, text)]}
         self.key_counter = 0
@@ -51,7 +51,7 @@ class MinHashDeduplicator(Deduplicator):
             m.update(token.encode("utf8"))
         return idx, m
 
-    def run(self, chunk: List[Dict]) -> Tuple[List[Dict], Dict]:
+    def run(self, chunk: List[Dict], step) -> Tuple[List[Dict], Dict]:
         """
         Process a chunk of documents, returning deduplicated list and metrics.
         
@@ -128,7 +128,7 @@ class MinHashDeduplicator(Deduplicator):
 
         # Save duplicates to Excel at the end of processing
         if self.log_duplicates:
-            save_duplicates()
+            save_duplicates(step=step)
             # excel_path  = save_duplicates(threshold=self.threshold)
             # wandb.log({"duplicates_file": wandb.Table(dataframe=pd.read_excel(excel_path))})
 

@@ -71,9 +71,9 @@ class MetricsLogger:
             **runtime_mem_metrics
         }
         
-        wandb.log(chunk_metrics)
+        wandb.log(chunk_metrics, step = chunk_index-1)
 
-    def log_dedup_metrics(self, metrics: Dict[str, Any]):
+    def log_dedup_metrics(self, metrics: Dict[str, Any],step):
        
         # Store metrics for final summary
         for key in self.dedup_metrics:
@@ -91,7 +91,7 @@ class MetricsLogger:
                 'duplicate_ratio'
             ] if k in metrics
         }
-        wandb.log(standard_metrics)
+        wandb.log(standard_metrics,step = step)
         
         # Handle special cases
         if 'top_duplicates' in metrics:
