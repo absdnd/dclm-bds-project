@@ -52,6 +52,7 @@ class BloomFilterDeduplicator(Deduplicator):
         )
         self.key = key
         self.debug_interval = cfg.bloom_debug_interval
+        self.num_process = cfg.num_process
 
     @staticmethod
     def _worker(args):
@@ -75,7 +76,7 @@ class BloomFilterDeduplicator(Deduplicator):
         # prepare arguments for each worker
         tasks = [(i, ex, self.text_column, self.key) for i, ex in enumerate(examples)]
 
-        with multiprocessing.Pool() as pool:
+        with multiprocessing.Pool(processes=self.num_process) as pool:
             for count, (idx, fingerprint) in enumerate(
                 pool.imap(self._worker, tasks), start=1
             ):
