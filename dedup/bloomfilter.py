@@ -97,4 +97,5 @@ class BloomFilterDeduplicator(Deduplicator):
                         f"{len(deduped)} unique"
                     )
 
-        return deduped
+        metrics = {}
+        return deduped, metrics
