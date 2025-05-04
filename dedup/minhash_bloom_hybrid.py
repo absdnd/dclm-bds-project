@@ -39,7 +39,6 @@ class MinHashBloomDeduplicator(Deduplicator):
 
         self.ngram_size = cfg.minhash_ngram_size
         self.num_perm = cfg.minhash_num_perm
-        self.similarity_threshold = cfg.minhash_threshold
 
     @staticmethod
     def _worker(args):
@@ -48,7 +47,7 @@ class MinHashBloomDeduplicator(Deduplicator):
         shingles = get_shingles(content, n=ngram_size)
         signature = compute_minhash_signature(shingles, num_perm=num_perm)
         fingerprint = hash_signature(signature)
-        return idx, fingerprint, signature
+        return idx, fingerprint
 
     def run(self, examples: list[dict], steps: int) -> list[dict]:
         total = len(examples)
@@ -56,27 +55,16 @@ class MinHashBloomDeduplicator(Deduplicator):
         deduped = []
         saturation_check_interval = 10000
 
-        prev_signatures = []  # Cache of prior signatures for true similarity checks
-
         tasks = [
             (i, ex, self.text_column, self.key, self.ngram_size, self.num_perm)
             for i, ex in enumerate(examples)
         ]
 
         with multiprocessing.Pool(processes=self.num_process) as pool:
-            for count, (idx, fingerprint, signature) in enumerate(pool.imap(self._worker, tasks), start=1):
-                # Check MinHash similarity against previous signatures
-                is_near_duplicate = any(
-                    signature.jaccard(prev_sig) >= self.similarity_threshold
-                    for prev_sig in prev_signatures
-                )
-
-                if not is_near_duplicate:
-                    # It's unique enough — update bloom and cache
+            for count, (idx, fingerprint) in enumerate(pool.imap(self._worker, tasks), start=1):
+                if fingerprint not in self.bloom:
                     self.bloom.add(fingerprint)
-                    prev_signatures.append(signature)
                     deduped.append(examples[idx])
-
 
                 if count % self.debug_interval == 0 or count == total:
                     elapsed = time.time() - start

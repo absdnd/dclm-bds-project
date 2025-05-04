@@ -45,7 +45,7 @@ class DedupConfig(BaseSettings):
 
     # MinHash-specific parameters for Hybrid Bloom
     minhash_ngram_size: int = Field(
-        default=5, description="Size of n-grams for MinHash fingerprinting"
+        default=2, description="Size of n-grams for MinHash fingerprinting"
     )
     minhash_num_perm: int = Field(
         default=128, description="Number of permutations for MinHash"
