@@ -43,6 +43,18 @@ class DedupConfig(BaseSettings):
         default=1000, description="How often to print debug info for MinHash", gt=0
     )
 
+    # MinHash-specific parameters for Hybrid Bloom
+    minhash_ngram_size: int = Field(
+        default=5, description="Size of n-grams for MinHash fingerprinting"
+    )
+    minhash_num_perm: int = Field(
+        default=128, description="Number of permutations for MinHash"
+    )
+    minhash_threshold: float = Field(
+        default=0.8, description="Jaccard similarity threshold for considering duplicates"
+    )
+
+
     # exact-specific settings (only used when method=exact)
     bloom_error_rate: float = Field(
         description="Error rate for bloom",
