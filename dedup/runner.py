@@ -54,7 +54,7 @@ def run_pipeline(cfg: DedupConfig):
         #deduped_chunk, perf = metrics_logger.run_with_metrics(deduper.run, chunk)
 
         (deduped_chunk, metrics), perf = metrics_logger.run_with_metrics(
-            lambda: deduper.run(chunk)
+            lambda: deduper.run(chunk, i)
         )
 
         print(f"Chunk {i + 1}: {len(chunk)} → {len(deduped_chunk)} after deduplication")
@@ -67,7 +67,7 @@ def run_pipeline(cfg: DedupConfig):
         )
 
         # Log method-specific metrics if available
-        metrics_logger.log_dedup_metrics(metrics)
+        metrics_logger.log_dedup_metrics(metrics, i)
 
         push_chunk_to_hub(
             chunk=deduped_chunk,
