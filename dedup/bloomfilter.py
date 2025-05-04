@@ -110,7 +110,7 @@ class BloomFilterDeduplicator(Deduplicator):
                         "bloom_saturation": saturation,
                         "bloom_saturation_percent": saturation * 100,
                         "processed_docs": count,
-                    })
+                    }, steps=steps)
 
         metrics = {}
         return deduped, metrics
