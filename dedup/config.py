@@ -50,9 +50,9 @@ class DedupConfig(BaseSettings):
     minhash_num_perm: int = Field(
         default=128, description="Number of permutations for MinHash"
     )
-    minhash_threshold: float = Field(
-        default=0.8, description="Jaccard similarity threshold for considering duplicates"
-    )
+    # minhash_threshold: float = Field(
+    #     default=0.8, description="Jaccard similarity threshold for considering duplicates"
+    # )
 
 
     # exact-specific settings (only used when method=exact)
