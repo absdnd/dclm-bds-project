@@ -5,6 +5,7 @@ import bitarray
 import time
 import multiprocessing
 from .config import DedupConfig
+import wandb
 
 
 class SimpleBloomFilter:
@@ -73,6 +74,8 @@ class BloomFilterDeduplicator(Deduplicator):
         start = time.time()
         deduped = []
 
+        saturation_check_interval = 1000
+
         # prepare arguments for each worker
         tasks = [(i, ex, self.text_column, self.key) for i, ex in enumerate(examples)]
 
@@ -95,6 +98,19 @@ class BloomFilterDeduplicator(Deduplicator):
                         f"{rate:.1f} docs/sec, "
                         f"{len(deduped)} unique"
                     )
+
+                # saturation check
+                if count % saturation_check_interval == 0:
+                    saturation = self.bloom.bit_array.count(True) / self.bloom.size
+                    print(
+                        f"[{time.strftime('%H:%M:%S')}] "
+                        f"Bloom filter saturation: {saturation:.4f} ({saturation * 100:.2f}%)"
+                    )
+                    wandb.log({
+                        "bloom_saturation": saturation,
+                        "bloom_saturation_percent": saturation * 100,
+                        "processed_docs": count,
+                    })
 
         metrics = {}
         return deduped, metrics
